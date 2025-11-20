@@ -70,7 +70,7 @@ export const Dashboard = () => {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Task Manager
+                Zodiac Task Manager
               </h1>
               <p className="text-gray-600 mt-2">
                 {user ? `Welcome back, ${user.email}` : 'Guest Mode - Tasks saved locally'}
