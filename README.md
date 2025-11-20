@@ -380,6 +380,83 @@ bun run test
 
 ---
 
+## 📘 API Documentation
+
+Semua respons mengikuti format standar dari `backend/src/utils/response.ts:8`:
+
+```json
+{ "success": true|false, "message": "...", "data": <payload> }
+```
+
+### Auth
+
+- `POST /auth/register`
+  - Body: `{ "email": string, "password": string(min 6) }`
+  - 201, Data: `{ "id": number, "email": string }`
+
+- `POST /auth/login`
+  - Body: `{ "email": string, "password": string }`
+  - 200, Data: `{ "token": string, "user": { "id": number, "email": string } }`
+
+Contoh:
+
+```bash
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+```
+
+### Tasks (Protected)
+
+Header wajib: `Authorization: Bearer <token>`
+
+- `GET /tasks`
+  - Query: `search?`, `status?`(`completed|active`), `sortBy?`(`createdAt|title|updatedAt`), `order?`(`asc|desc`), `page?`(number), `limit?`(number)
+  - 200, Data: `{ "tasks": Task[], "pagination": { page, limit, total, totalPages } }`
+
+- `POST /tasks`
+  - Body: `{ "title": string(1..255), "description?": string|null, "completed?": boolean }`
+  - 201, Data: `Task`
+
+- `PUT /tasks/:id`
+  - Body: `{ "title?": string, "description?": string|null, "completed?": boolean }`
+  - 200, Data: `Task`
+
+- `DELETE /tasks/:id`
+  - 200, Data: `null`
+
+Contoh:
+
+```bash
+# Ambil daftar tugas (dengan filter & pagination)
+curl "http://localhost:3000/tasks?search=fix&status=active&sortBy=createdAt&order=desc&page=1&limit=10" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Buat tugas baru
+curl -X POST http://localhost:3000/tasks \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Write docs","description":"API section"}'
+
+# Perbarui tugas
+curl -X PUT http://localhost:3000/tasks/1 \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"completed":true}'
+
+# Hapus tugas
+curl -X DELETE http://localhost:3000/tasks/1 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Skema validasi permintaan berada di `backend/src/schemas/index.ts:4` (auth) dan `backend/src/schemas/index.ts:15` (tasks). Proteksi JWT diterapkan melalui derivasi `userId` di `backend/src/index.ts:17` dan dipakai di controller `backend/src/controllers/task.controller.ts:10`.
+
+---
+
 ## ⚖️ Trade-offs & Design Decisions
 
 ### 1. **Prisma v5 instead of v7**
