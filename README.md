@@ -9,7 +9,32 @@ A modern, full-stack task management application featuring dual-mode operation (
 
 ## 🎯 Project Overview
 
-Zodiac Task Manager is a production-ready task management application that demonstrates modern web development best practices. It features a unique dual-mode architecture allowing users to start immediately without registration (guest mode with LocalStorage) or sign up for cloud-synced tasks (user mode with PostgreSQL). The application includes advanced features like real-time search, status filtering, multiple sort options, and optimistic UI updates powered by React Query.
+Zodiac TaskFlow is a **production-ready** task management application that demonstrates modern web development best practices. It features a unique dual-mode architecture allowing users to start immediately without registration (guest mode with LocalStorage) or sign up for cloud-synced tasks (user mode with PostgreSQL).
+
+### ✨ Key Features
+
+**Core Functionality:**
+- ✅ **Full CRUD Operations** - Create, Read, Update, Delete tasks
+- ✅ **Dual-Mode Architecture** - Guest (LocalStorage) & User (Database) modes
+- ✅ **JWT Authentication** - Secure token-based authentication
+- ✅ **Inline Task Editing** - Edit tasks directly without modals
+
+**Advanced Features:**
+- ✅ **Search** - Real-time search across title and description
+- ✅ **Filter** - Filter by status (All/Active/Completed)
+- ✅ **Sort** - Multiple sort options (Date/Title/Updated, Asc/Desc)
+- ✅ **Pagination** - Server-side pagination (10 items per page)
+- ✅ **Optimistic Updates** - Instant UI feedback with React Query
+- ✅ **Database Indexing** - Optimized queries for performance
+
+**Developer Experience:**
+- ✅ **Layered Architecture** - Clean separation (Controller → Service → Repository)
+- ✅ **Request Validation** - Schema-based validation with Elysia
+- ✅ **Error Handling** - Structured error responses
+- ✅ **Unit Tests** - 7/7 backend tests passing
+- ✅ **Docker Support** - One-command deployment
+- ✅ **Standard API Response** - Consistent response format
+- ✅ **TypeScript** - Full type safety across the stack
 
 ## 🛠️ Tech Stack
 
@@ -142,20 +167,6 @@ take-home-zodiac/
 │   ├── vite.config.ts           # Vite configuration
 │   └── package.json             # Frontend dependencies
 │
-└── README.md                     # This file
-```
-
-## 🚀 Setup Instructions
-
-### Prerequisites
-- [Bun](https://bun.sh/) v1.0+
-- [PostgreSQL](https://www.postgresql.org/) v12+
-
-### 1. Clone & Install
-
-```bash
-git clone <repository-url>
-cd take-home-zodiac
 
 # Backend
 cd backend
@@ -199,6 +210,166 @@ VITE_API_URL=http://localhost:3000
 cd backend
 bunx prisma migrate dev
 bunx prisma generate
+```
+
+### 4. Start Development Servers
+
+```bash
+# Terminal 1 - Backend
+cd backend
+bun run dev
+
+# Terminal 2 - Frontend
+cd frontend
+bun run dev
+```
+
+- **Backend**: http://localhost:3000
+- **Frontend**: http://localhost:5173
+
+---
+
+## 🐳 Docker Deployment (Recommended)
+
+The easiest way to run the entire stack with one command!
+
+### Prerequisites
+- [Docker](https://www.docker.com/get-started) v20+
+- [Docker Compose](https://docs.docker.com/compose/install/) v2+
+
+### Quick Start
+
+**Option 1: Using deployment script (Linux/Mac)**
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+**Option 2: Using Docker Compose directly**
+```bash
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Stop and remove all data (clean slate)
+docker-compose down -v
+```
+
+### What's Included in Docker Setup
+
+The Docker Compose stack includes:
+- ✅ **PostgreSQL** database (port 5432)
+- ✅ **Backend API** (port 3000)
+- ✅ **Frontend** served by nginx (port 80)
+- ✅ **Automatic database migrations**
+- ✅ **Health checks** for all services
+- ✅ **Volume persistence** for database
+- ✅ **Optimized multi-stage builds**
+
+### Access the Application
+
+Once deployed, access:
+- **Frontend**: http://localhost
+- **Backend API**: http://localhost:3000
+- **Database**: localhost:5432 (postgres/postgres)
+
+### Environment Configuration
+
+Default credentials (change for production):
+```yaml
+Database:
+  User: postgres
+  Password: postgres
+  Database: taskmanager
+
+JWT:
+  Secret: your-super-secret-jwt-key-change-in-production
+```
+
+To customize, edit `docker-compose.yml`:
+```yaml
+backend:
+  environment:
+    DATABASE_URL: postgresql://user:pass@db:5432/dbname
+    JWT_SECRET: your-secret-here
+    PORT: 3000
+```
+
+### Docker Commands Reference
+
+```bash
+# Start services
+docker-compose up -d
+
+# View all logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Restart a service
+docker-compose restart backend
+
+# Rebuild after code changes
+docker-compose up -d --build
+
+# Stop all services
+docker-compose down
+
+# Remove all data and start fresh
+docker-compose down -v
+docker-compose up -d
+
+# Access backend shell
+docker-compose exec backend sh
+
+# Run migrations manually
+docker-compose exec backend bunx prisma migrate deploy
+
+# Check service status
+docker-compose ps
+```
+
+### Production Deployment
+
+For production environments:
+
+1. **Update secrets in `docker-compose.yml`:**
+   ```yaml
+   JWT_SECRET: <generate-strong-random-string>
+   POSTGRES_PASSWORD: <strong-password>
+   ```
+
+2. **Update API URL for frontend:**
+   ```yaml
+   frontend:
+     build:
+       args:
+         VITE_API_URL: https://api.yourdomain.com
+   ```
+
+3. **Add SSL/TLS:**
+   - Use a reverse proxy (nginx, traefik, caddy)
+   - Configure SSL certificates (Let's Encrypt)
+
+4. **Security best practices:**
+   - Don't expose database port publicly
+   - Use Docker secrets for sensitive data
+   - Enable firewall rules
+   - Regular security updates
+
+---
+
+## 🧪 Testing
+
+```bash
+# Backend tests
 cd backend
 bun test
 
@@ -206,6 +377,8 @@ bun test
 cd frontend
 bun run test
 ```
+
+---
 
 ## ⚖️ Trade-offs & Design Decisions
 
