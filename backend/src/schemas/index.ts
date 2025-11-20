@@ -14,13 +14,13 @@ export const loginSchema = t.Object({
 // Task schemas
 export const createTaskSchema = t.Object({
     title: t.String({ minLength: 1, maxLength: 255 }),
-    description: t.Optional(t.String({ maxLength: 1000 })),
+    description: t.Optional(t.Nullable(t.String({ maxLength: 1000 }))),
     completed: t.Optional(t.Boolean()),
 });
 
 export const updateTaskSchema = t.Object({
     title: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
-    description: t.Optional(t.String({ maxLength: 1000 })),
+    description: t.Optional(t.Nullable(t.String({ maxLength: 1000 }))),
     completed: t.Optional(t.Boolean()),
 });
 
