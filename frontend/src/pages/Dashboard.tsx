@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { type Task, type TaskFilters, fetchTasks, createTask, updateTask, deleteTask, getGuestTasks, createGuestTask, updateGuestTask, deleteGuestTask } from '../api';
@@ -39,15 +39,15 @@ export const Dashboard = () => {
     totalPages: Math.ceil(guestTotal / (filters.limit || 10)),
   };
 
-  // Load guest tasks when filters change
-  useState(() => {
+  // Load guest tasks when filters or auth state change
+  useEffect(() => {
     if (!token) {
       const stored = localStorage.getItem('guest_tasks');
       const allTasks: Task[] = stored ? JSON.parse(stored) : [];
       setGuestTotal(allTasks.length);
       setGuestTasks(getGuestTasks(filters));
     }
-  });
+  }, [filters, token]);
 
   // Mutations with optimistic updates
   const createMutation = useMutation({
