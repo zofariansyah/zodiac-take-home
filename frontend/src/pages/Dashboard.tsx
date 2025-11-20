@@ -15,24 +15,36 @@ export const Dashboard = () => {
     status: 'all',
     sortBy: 'createdAt',
     order: 'desc',
+    page: 1,
+    limit: 10,
   });
 
   // React Query for authenticated users
-  const { data: apiTasks = [], isLoading } = useQuery({
+  const { data: apiData, isLoading } = useQuery({
     queryKey: ['tasks', filters, token],
-    queryFn: () => token ? fetchTasks(token, filters) : Promise.resolve([]),
+    queryFn: () => token ? fetchTasks(token, filters) : Promise.resolve({ tasks: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }),
     enabled: !!token,
   });
 
   // Guest mode state
   const [guestTasks, setGuestTasks] = useState<Task[]>([]);
+  const [guestTotal, setGuestTotal] = useState(0);
 
   // Determine which tasks to display
-  const tasks = token ? apiTasks : guestTasks;
+  const tasks = token ? apiData?.tasks || [] : guestTasks;
+  const pagination = token ? apiData?.pagination : {
+    page: filters.page || 1,
+    limit: filters.limit || 10,
+    total: guestTotal,
+    totalPages: Math.ceil(guestTotal / (filters.limit || 10)),
+  };
 
   // Load guest tasks when filters change
   useState(() => {
     if (!token) {
+      const stored = localStorage.getItem('guest_tasks');
+      const allTasks: Task[] = stored ? JSON.parse(stored) : [];
+      setGuestTotal(allTasks.length);
       setGuestTasks(getGuestTasks(filters));
     }
   });
@@ -46,36 +58,14 @@ export const Dashboard = () => {
         return createGuestTask(taskData);
       }
     },
-    onMutate: async (newTask) => {
-      if (token) {
-        await queryClient.cancelQueries({ queryKey: ['tasks'] });
-        const previousTasks = queryClient.getQueryData<Task[]>(['tasks', filters, token]);
-        
-        queryClient.setQueryData<Task[]>(['tasks', filters, token], (old = []) => [
-          {
-            id: Date.now(),
-            ...newTask,
-            description: newTask.description || null,
-            completed: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          ...old,
-        ]);
-        
-        return { previousTasks };
-      } else {
-        setGuestTasks(getGuestTasks(filters));
-      }
-    },
-    onError: (err, newTask, context) => {
-      if (token && context?.previousTasks) {
-        queryClient.setQueryData(['tasks', filters, token], context.previousTasks);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       if (token) {
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      } else {
+        const stored = localStorage.getItem('guest_tasks');
+        const allTasks: Task[] = stored ? JSON.parse(stored) : [];
+        setGuestTotal(allTasks.length);
+        setGuestTasks(getGuestTasks(filters));
       }
     },
   });
@@ -88,28 +78,11 @@ export const Dashboard = () => {
         return updateGuestTask(id, updates);
       }
     },
-    onMutate: async ({ id, updates }) => {
-      if (token) {
-        await queryClient.cancelQueries({ queryKey: ['tasks'] });
-        const previousTasks = queryClient.getQueryData<Task[]>(['tasks', filters, token]);
-        
-        queryClient.setQueryData<Task[]>(['tasks', filters, token], (old = []) =>
-          old.map(task => task.id === id ? { ...task, ...updates } : task)
-        );
-        
-        return { previousTasks };
-      } else {
-        setGuestTasks(getGuestTasks(filters));
-      }
-    },
-    onError: (err, variables, context) => {
-      if (token && context?.previousTasks) {
-        queryClient.setQueryData(['tasks', filters, token], context.previousTasks);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       if (token) {
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      } else {
+        setGuestTasks(getGuestTasks(filters));
       }
     },
   });
@@ -122,28 +95,14 @@ export const Dashboard = () => {
         return deleteGuestTask(id);
       }
     },
-    onMutate: async (id) => {
-      if (token) {
-        await queryClient.cancelQueries({ queryKey: ['tasks'] });
-        const previousTasks = queryClient.getQueryData<Task[]>(['tasks', filters, token]);
-        
-        queryClient.setQueryData<Task[]>(['tasks', filters, token], (old = []) =>
-          old.filter(task => task.id !== id)
-        );
-        
-        return { previousTasks };
-      } else {
-        setGuestTasks(getGuestTasks(filters));
-      }
-    },
-    onError: (err, id, context) => {
-      if (token && context?.previousTasks) {
-        queryClient.setQueryData(['tasks', filters, token], context.previousTasks);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       if (token) {
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      } else {
+        const stored = localStorage.getItem('guest_tasks');
+        const allTasks: Task[] = stored ? JSON.parse(stored) : [];
+        setGuestTotal(allTasks.length);
+        setGuestTasks(getGuestTasks(filters));
       }
     },
   });
@@ -161,7 +120,18 @@ export const Dashboard = () => {
   };
 
   const handleFilterChange = (newFilters: Partial<TaskFilters>) => {
-    const updated = { ...filters, ...newFilters };
+    const updated = { ...filters, ...newFilters, page: 1 }; // Reset to page 1 on filter change
+    setFilters(updated);
+    if (!token) {
+      const stored = localStorage.getItem('guest_tasks');
+      const allTasks: Task[] = stored ? JSON.parse(stored) : [];
+      setGuestTotal(allTasks.length);
+      setGuestTasks(getGuestTasks(updated));
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const updated = { ...filters, page: newPage };
     setFilters(updated);
     if (!token) {
       setGuestTasks(getGuestTasks(updated));
@@ -278,19 +248,63 @@ export const Dashboard = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
-              Your Tasks ({tasks.length})
-            </h2>
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onUpdate={handleUpdateTask}
-                onDelete={handleDeleteTask}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-700">
+                  Your Tasks ({pagination?.total || 0})
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Page {pagination?.page || 1} of {pagination?.totalPages || 1}
+                </p>
+              </div>
+              {tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onUpdate={handleUpdateTask}
+                  onDelete={handleDeleteTask}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 bg-white p-4 rounded-xl shadow-md">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                  className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
+                >
+                  ← Previous
+                </button>
+                
+                <div className="flex gap-1">
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded-lg font-medium transition-all ${
+                        page === pagination.page
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page === pagination.totalPages}
+                  className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

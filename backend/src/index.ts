@@ -19,12 +19,25 @@ const app = new Elysia()
             return { error: 'Unauthorized' };
         }
 
-        const { search, status, sortBy = 'createdAt', order = 'desc' } = query as {
+        const {
+            search,
+            status,
+            sortBy = 'createdAt',
+            order = 'desc',
+            page = '1',
+            limit = '10'
+        } = query as {
             search?: string;
             status?: 'completed' | 'active';
             sortBy?: 'createdAt' | 'title' | 'updatedAt';
             order?: 'asc' | 'desc';
+            page?: string;
+            limit?: string;
         };
+
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
 
         const where: any = { userId };
 
@@ -43,10 +56,25 @@ const app = new Elysia()
             where.completed = false;
         }
 
-        return await prisma.task.findMany({
-            where,
-            orderBy: { [sortBy]: order }
-        });
+        const [tasks, total] = await Promise.all([
+            prisma.task.findMany({
+                where,
+                orderBy: { [sortBy]: order },
+                skip,
+                take: limitNum,
+            }),
+            prisma.task.count({ where })
+        ]);
+
+        return {
+            tasks,
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                total,
+                totalPages: Math.ceil(total / limitNum),
+            }
+        };
     })
     .post('/tasks', async ({ userId, body, set }) => {
         if (!userId) {

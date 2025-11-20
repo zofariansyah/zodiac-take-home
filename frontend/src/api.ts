@@ -14,6 +14,18 @@ export interface TaskFilters {
     status?: 'completed' | 'active' | 'all';
     sortBy?: 'createdAt' | 'title' | 'updatedAt';
     order?: 'asc' | 'desc';
+    page?: number;
+    limit?: number;
+}
+
+export interface PaginatedResponse {
+    tasks: Task[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
 }
 
 // LocalStorage operations for guest mode
@@ -50,6 +62,12 @@ export const getGuestTasks = (filters?: TaskFilters): Task[] => {
         return 0;
     });
 
+    // Apply pagination for guest mode
+    if (filters?.page && filters?.limit) {
+        const start = (filters.page - 1) * filters.limit;
+        tasks = tasks.slice(start, start + filters.limit);
+    }
+
     return tasks;
 };
 
@@ -58,7 +76,8 @@ const saveGuestTasks = (tasks: Task[]) => {
 };
 
 export const createGuestTask = (task: { title: string; description?: string }): Task => {
-    const tasks = getGuestTasks();
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const tasks: Task[] = stored ? JSON.parse(stored) : [];
     const newTask: Task = {
         id: Date.now(),
         title: task.title,
@@ -73,7 +92,8 @@ export const createGuestTask = (task: { title: string; description?: string }): 
 };
 
 export const updateGuestTask = (id: number, updates: Partial<Task>): Task => {
-    const tasks = getGuestTasks();
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const tasks: Task[] = stored ? JSON.parse(stored) : [];
     const index = tasks.findIndex(t => t.id === id);
     if (index === -1) throw new Error('Task not found');
     tasks[index] = { ...tasks[index], ...updates, updatedAt: new Date().toISOString() };
@@ -82,17 +102,21 @@ export const updateGuestTask = (id: number, updates: Partial<Task>): Task => {
 };
 
 export const deleteGuestTask = (id: number) => {
-    const tasks = getGuestTasks().filter(t => t.id !== id);
-    saveGuestTasks(tasks);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const tasks: Task[] = stored ? JSON.parse(stored) : [];
+    const filtered = tasks.filter(t => t.id !== id);
+    saveGuestTasks(filtered);
 };
 
 // API operations for authenticated users
-export const fetchTasks = async (token: string, filters?: TaskFilters): Promise<Task[]> => {
+export const fetchTasks = async (token: string, filters?: TaskFilters): Promise<PaginatedResponse> => {
     const params = new URLSearchParams();
     if (filters?.search) params.append('search', filters.search);
     if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
     if (filters?.sortBy) params.append('sortBy', filters.sortBy);
     if (filters?.order) params.append('order', filters.order);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
 
     const url = `${API_URL}/tasks${params.toString() ? `?${params.toString()}` : ''}`;
     const res = await fetch(url, {
