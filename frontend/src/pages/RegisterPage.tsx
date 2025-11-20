@@ -15,7 +15,7 @@ export const RegisterPage: React.FC = () => {
     try {
       await register(email, password);
       navigate('/');
-    } catch (err) {
+    } catch (_err) {
       setError('Registration failed. Email may already exist.');
     }
   };
