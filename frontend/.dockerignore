@@ -15,3 +15,6 @@ coverage
 .git
 .gitignore
 README.md
+src/__tests__
+*.test.ts
+*.test.tsx
