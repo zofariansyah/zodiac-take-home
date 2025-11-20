@@ -23,4 +23,9 @@ model Task {
   updatedAt   DateTime @updatedAt
   userId      Int?
   user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([completed])
+  @@index([createdAt])
+  @@index([title])
 }

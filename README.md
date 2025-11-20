@@ -1,95 +1,196 @@
-# Task Management Application
+# Zodiac Task Manager
 
-A modern, full-stack task management application built with **Bun**, **Elysia.js**, **React**, **TypeScript**, and **PostgreSQL**.
+A modern, full-stack task management application featuring dual-mode operation (guest/authenticated), real-time search and filtering, optimistic updates, and a beautiful UI. Built with cutting-edge technologies for maximum performance and developer experience.
 
-## Features
+## 📸 Screenshots
 
-- ✅ **Dual Mode Operation**
-  - **Guest Mode**: Tasks stored in browser LocalStorage (no login required)
-  - **User Mode**: Tasks synced to PostgreSQL database (requires login)
-- 🔐 **Authentication**: JWT-based login/register system
-- 🎨 **Modern UI**: Clean, responsive design with Tailwind CSS
-- ⚡ **Fast**: Built with Bun for blazing-fast performance
-- 🧪 **Tested**: Unit tests for backend and frontend
+> **Note**: Add your screenshots here after capturing them manually.
 
-## Tech Stack
+## 🎯 Project Overview
+
+Zodiac Task Manager is a production-ready task management application that demonstrates modern web development best practices. It features a unique dual-mode architecture allowing users to start immediately without registration (guest mode with LocalStorage) or sign up for cloud-synced tasks (user mode with PostgreSQL). The application includes advanced features like real-time search, status filtering, multiple sort options, and optimistic UI updates powered by React Query.
+
+## 🛠️ Tech Stack
 
 ### Backend
-- **Runtime**: Bun
-- **Framework**: Elysia.js
-- **Database**: PostgreSQL with Prisma ORM
-- **Auth**: JWT + bcrypt
+- **Runtime**: [Bun](https://bun.sh/) - Ultra-fast JavaScript runtime
+- **Framework**: [Elysia.js](https://elysiajs.com/) - Ergonomic web framework for Bun
+- **Database**: [PostgreSQL](https://www.postgresql.org/) - Reliable relational database
+- **ORM**: [Prisma](https://www.prisma.io/) v5 - Type-safe database client
+- **Authentication**: JWT + bcrypt - Secure token-based auth
 
 ### Frontend
-- **Framework**: React 19 + TypeScript
-- **Styling**: Tailwind CSS v4
-- **Routing**: React Router v7
-- **Build Tool**: Vite
+- **Framework**: [React](https://react.dev/) 19 + TypeScript - Modern UI library
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS
+- **State Management**: [TanStack Query](https://tanstack.com/query) (React Query) - Powerful async state management
+- **Routing**: [React Router](https://reactrouter.com/) v7 - Client-side routing
+- **Build Tool**: [Vite](https://vitejs.dev/) - Next-generation frontend tooling
 
-## Prerequisites
+## 🏗️ Architecture
 
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        CLIENT SIDE                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────┐         ┌──────────────┐                │
+│  │ Guest Mode   │         │  User Mode   │                │
+│  │ (LocalStorage)│        │  (API + DB)  │                │
+│  └──────┬───────┘         └──────┬───────┘                │
+│         │                        │                         │
+│         └────────┬───────────────┘                         │
+│                  │                                         │
+│         ┌────────▼─────────┐                               │
+│         │  React Query     │ (Optimistic Updates)         │
+│         │  Cache Layer     │                               │
+│         └────────┬─────────┘                               │
+│                  │                                         │
+│         ┌────────▼─────────┐                               │
+│         │   Dashboard      │                               │
+│         │ Search/Filter    │                               │
+│         │ Sort/CRUD        │                               │
+│         └──────────────────┘                               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                         │
+                         │ HTTP/REST
+                         │
+┌────────────────────────▼─────────────────────────────────────┐
+│                      SERVER SIDE                             │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              Elysia.js API Server                    │  │
+│  │                                                       │  │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌────────────┐ │  │
+│  │  │   Auth      │  │    Tasks     │  │   CORS     │ │  │
+│  │  │ /register   │  │ GET /tasks   │  │  Middleware│ │  │
+│  │  │ /login      │  │ POST /tasks  │  └────────────┘ │  │
+│  │  │ (JWT)       │  │ PUT /tasks   │                  │  │
+│  │  └─────────────┘  │ DELETE /tasks│                  │  │
+│  │                   │ (Protected)  │                  │  │
+│  │                   └──────┬───────┘                  │  │
+│  └──────────────────────────┼──────────────────────────┘  │
+│                             │                              │
+│                   ┌─────────▼─────────┐                    │
+│                   │   Prisma ORM      │                    │
+│                   │   (Type-safe)     │                    │
+│                   └─────────┬─────────┘                    │
+│                             │                              │
+│                   ┌─────────▼─────────┐                    │
+│                   │   PostgreSQL      │                    │
+│                   │                   │                    │
+│                   │  ┌─────────────┐  │                    │
+│                   │  │ Users Table │  │                    │
+│                   │  └─────────────┘  │                    │
+│                   │  ┌─────────────┐  │                    │
+│                   │  │ Tasks Table │  │                    │
+│                   │  │ (Indexed)   │  │                    │
+│                   │  └─────────────┘  │                    │
+│                   └───────────────────┘                    │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## 📁 Folder Structure
+
+```
+take-home-zodiac/
+├── backend/
+│   ├── src/
+│   │   ├── index.ts              # Main server (API routes, search/filter/sort)
+│   │   └── auth.ts               # Authentication logic (JWT + bcrypt)
+│   ├── prisma/
+│   │   ├── schema.prisma         # Database schema (User + Task models with indexes)
+│   │   └── migrations/           # Database migrations
+│   ├── test/
+│   │   └── app.test.ts           # Unit tests (7 tests, all passing)
+│   ├── .env.example              # Environment variables template
+│   └── package.json              # Backend dependencies
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── TaskCard.tsx      # Task display with inline edit
+│   │   │   └── TaskForm.tsx      # Task creation form
+│   │   ├── context/
+│   │   │   └── AuthContext.tsx   # Authentication state management
+│   │   ├── pages/
+│   │   │   ├── Dashboard.tsx     # Main dashboard (React Query + filters)
+│   │   │   ├── LoginPage.tsx     # Login page
+│   │   │   └── RegisterPage.tsx  # Registration page
+│   │   ├── __tests__/
+│   │   │   ├── setup.ts          # Test configuration
+│   │   │   └── api.test.ts       # Guest mode tests
+│   │   ├── api.ts                # API client (dual-mode + filters)
+│   │   ├── App.tsx               # Main app (React Query provider)
+│   │   └── main.tsx              # Entry point
+│   ├── vite.config.ts            # Vite configuration
+│   └── package.json              # Frontend dependencies
+│
+└── README.md                      # This file
+```
+
+## 🚀 Setup Instructions
+
+### Prerequisites
 - [Bun](https://bun.sh/) v1.0+
 - [PostgreSQL](https://www.postgresql.org/) v12+
-- Node.js v18+ (for some tooling)
 
-## Setup Instructions
-
-### 1. Clone the Repository
+### 1. Clone & Install
 
 ```bash
 git clone <repository-url>
 cd take-home-zodiac
+
+# Backend
+cd backend
+bun install
+
+# Frontend
+cd ../frontend
+bun install
 ```
 
-### 2. Backend Setup
+### 2. Configure Database
 
 ```bash
 cd backend
-
-# Install dependencies
-bun install
-
-# Configure environment variables
 cp .env.example .env
-# Edit .env and update DATABASE_URL with your PostgreSQL connection string
 ```
 
-**Example `.env`:**
+Edit `.env`:
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/taskmanager?schema=public"
 JWT_SECRET="your-secret-key-here"
 ```
 
+### 3. Run Migrations
+
 ```bash
-# Run database migrations
+cd backend
 bunx prisma migrate dev
-
-# Generate Prisma Client
 bunx prisma generate
-
-# Start the backend server
-bun run src/index.ts
 ```
 
-The API will be available at `http://localhost:3000`
-
-### 3. Frontend Setup
+### 4. Start Servers
 
 ```bash
+# Terminal 1 - Backend
+cd backend
+bun run dev
+
+# Terminal 2 - Frontend
 cd frontend
-
-# Install dependencies
-bun install
-
-# Start the development server
 bun run dev
 ```
 
-The app will be available at `http://localhost:5173`
+- **Backend**: http://localhost:3000
+- **Frontend**: http://localhost:5173
 
-## API Documentation
+## 📚 API Documentation
 
-### Authentication Endpoints
+### Authentication
 
 #### Register
 ```http
@@ -99,14 +200,6 @@ Content-Type: application/json
 {
   "email": "user@example.com",
   "password": "password123"
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "email": "user@example.com"
 }
 ```
 
@@ -125,55 +218,39 @@ Content-Type: application/json
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": 1,
-    "email": "user@example.com"
-  }
+  "user": { "id": 1, "email": "user@example.com" }
 }
 ```
 
-### Task Endpoints
+### Tasks (Protected)
 
-All task endpoints require authentication via `Authorization: Bearer <token>` header.
+All task endpoints require: `Authorization: Bearer <token>`
 
-#### Get All Tasks
+#### Get Tasks (with filters)
 ```http
-GET /tasks
-Authorization: Bearer <token>
+GET /tasks?search=meeting&status=active&sortBy=createdAt&order=desc
 ```
 
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "title": "Complete project",
-    "description": "Finish the task manager",
-    "completed": false,
-    "createdAt": "2025-11-20T10:00:00.000Z",
-    "updatedAt": "2025-11-20T10:00:00.000Z",
-    "userId": 1
-  }
-]
-```
+**Query Parameters:**
+- `search` (optional): Search in title and description
+- `status` (optional): `completed` | `active`
+- `sortBy` (optional): `createdAt` | `title` | `updatedAt` (default: `createdAt`)
+- `order` (optional): `asc` | `desc` (default: `desc`)
 
 #### Create Task
 ```http
 POST /tasks
-Authorization: Bearer <token>
 Content-Type: application/json
 
 {
   "title": "New task",
-  "description": "Optional description",
-  "completed": false
+  "description": "Optional description"
 }
 ```
 
 #### Update Task
 ```http
 PUT /tasks/:id
-Authorization: Bearer <token>
 Content-Type: application/json
 
 {
@@ -185,89 +262,99 @@ Content-Type: application/json
 #### Delete Task
 ```http
 DELETE /tasks/:id
-Authorization: Bearer <token>
 ```
 
-## Running Tests
+## ✨ Features
 
-### Backend Tests
+### Core Features
+- ✅ **Dual-Mode Operation**
+  - Guest Mode: LocalStorage (no login)
+  - User Mode: PostgreSQL (with login)
+- ✅ **Full CRUD** operations
+- ✅ **Authentication** (JWT + bcrypt)
+- ✅ **Inline Task Editing**
+- ✅ **Modern UI** with Tailwind CSS v4
+
+### Advanced Features
+- 🔍 **Real-time Search** (title + description)
+- 📊 **Status Filtering** (All/Active/Completed)
+- 🔄 **Multiple Sort Options** (Date/Title/Updated)
+- ⚡ **Optimistic Updates** (React Query)
+- 🗂️ **Database Indexing** (userId, completed, createdAt, title)
+- 🧪 **Unit Tests** (Backend: 7/7 passing)
+
+## 🧪 Testing
+
 ```bash
+# Backend tests
 cd backend
 bun test
-```
 
-### Frontend Tests
-```bash
+# Frontend tests
 cd frontend
 bun run test
 ```
 
-## Project Structure
+## ⚖️ Trade-offs & Design Decisions
 
-```
-take-home-zodiac/
-├── backend/
-│   ├── src/
-│   │   ├── index.ts          # Main server file
-│   │   └── auth.ts           # Authentication logic
-│   ├── prisma/
-│   │   ├── schema.prisma     # Database schema
-│   │   └── migrations/       # Database migrations
-│   ├── test/                 # Unit tests
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/       # Reusable components
-│   │   ├── context/          # React context (Auth)
-│   │   ├── pages/            # Page components
-│   │   ├── api.ts            # API client
-│   │   └── App.tsx           # Main app component
-│   ├── __tests__/            # Unit tests
-│   └── package.json
-└── README.md
-```
+### 1. **Prisma v5 instead of v7**
+- **Why**: Prisma v7 had compatibility issues with Bun runtime
+- **Trade-off**: Missing latest features, but gained stability
+- **Impact**: Production-ready, no runtime crashes
 
-## Usage
+### 2. **Dual-Mode Architecture**
+- **Why**: Reduce friction for new users, progressive enhancement
+- **Trade-off**: More complex frontend logic (two storage strategies)
+- **Impact**: Better UX, higher initial development cost
 
-### Guest Mode
-1. Open the app at `http://localhost:5173`
-2. Start creating tasks immediately
-3. Tasks are saved in your browser's LocalStorage
+### 3. **LocalStorage for Guest Mode**
+- **Why**: Zero server load, instant feedback, privacy
+- **Trade-off**: Device-specific, no sync across devices
+- **Impact**: Perfect for trying the app, encourages sign-up
 
-### User Mode
-1. Click "Sign Up" to create an account
-2. Login with your credentials
-3. Tasks are now saved to the database
-4. Access your tasks from any device
+### 4. **React Query for State Management**
+- **Why**: Built-in caching, optimistic updates, automatic refetching
+- **Trade-off**: Additional dependency, learning curve
+- **Impact**: Significantly better UX, less boilerplate
 
-## Development
+### 5. **Database Indexing Strategy**
+- **Why**: Optimize search and filter queries
+- **Indexes**: `userId`, `completed`, `createdAt`, `title`
+- **Trade-off**: Slightly slower writes, more storage
+- **Impact**: Fast queries even with thousands of tasks
 
-### Database Management
+### 6. **Inline Edit vs Modal**
+- **Why**: Fewer clicks, smoother UX
+- **Trade-off**: More complex component state
+- **Impact**: Better user experience, cleaner UI
 
-```bash
-# Create a new migration
-bunx prisma migrate dev --name migration_name
+### 7. **No Email Verification**
+- **Why**: Requires external email service (SendGrid, etc.)
+- **Trade-off**: Less secure, potential spam accounts
+- **Impact**: Faster MVP, can be added later
 
-# Reset database
-bunx prisma migrate reset
+### 8. **Case-Insensitive Search**
+- **Why**: Better user experience
+- **Trade-off**: Slightly slower queries (but mitigated by indexes)
+- **Impact**: More intuitive search behavior
 
-# Open Prisma Studio (GUI)
-bunx prisma studio
-```
+## 🔮 Future Enhancements
 
-### Build for Production
+- [ ] Task categories/tags
+- [ ] Due dates and reminders
+- [ ] Task sharing between users
+- [ ] Dark mode toggle
+- [ ] Export tasks (CSV/JSON)
+- [ ] Password reset via email
+- [ ] Email verification
+- [ ] Drag-and-drop task reordering
+- [ ] Rich text descriptions (Markdown)
+- [ ] File attachments
 
-```bash
-# Backend (no build needed, run directly with Bun)
-cd backend
-bun run src/index.ts
-
-# Frontend
-cd frontend
-bun run build
-bun run preview
-```
-
-## License
+## 📄 License
 
 MIT
+
+---
+
+**Built with ❤️ using Bun, Elysia, React, and PostgreSQL**

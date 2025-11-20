@@ -13,15 +13,40 @@ const app = new Elysia()
         const userId = await authenticate(request);
         return { userId };
     })
-    .get('/tasks', async ({ userId, set }) => {
+    .get('/tasks', async ({ userId, set, query }) => {
         if (!userId) {
             set.status = 401;
             return { error: 'Unauthorized' };
         }
+
+        const { search, status, sortBy = 'createdAt', order = 'desc' } = query as {
+            search?: string;
+            status?: 'completed' | 'active';
+            sortBy?: 'createdAt' | 'title' | 'updatedAt';
+            order?: 'asc' | 'desc';
+        };
+
+        const where: any = { userId };
+
+        // Filter by search
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
+        // Filter by status
+        if (status === 'completed') {
+            where.completed = true;
+        } else if (status === 'active') {
+            where.completed = false;
+        }
+
         return await prisma.task.findMany({
-            where: { userId },
-            orderBy: { createdAt: 'desc' }
-        })
+            where,
+            orderBy: { [sortBy]: order }
+        });
     })
     .post('/tasks', async ({ userId, body, set }) => {
         if (!userId) {

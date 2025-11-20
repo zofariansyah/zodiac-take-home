@@ -9,12 +9,48 @@ export interface Task {
     updatedAt: string;
 }
 
+export interface TaskFilters {
+    search?: string;
+    status?: 'completed' | 'active' | 'all';
+    sortBy?: 'createdAt' | 'title' | 'updatedAt';
+    order?: 'asc' | 'desc';
+}
+
 // LocalStorage operations for guest mode
 const STORAGE_KEY = 'guest_tasks';
 
-export const getGuestTasks = (): Task[] => {
+export const getGuestTasks = (filters?: TaskFilters): Task[] => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    let tasks: Task[] = stored ? JSON.parse(stored) : [];
+
+    // Apply filters
+    if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        tasks = tasks.filter(t =>
+            t.title.toLowerCase().includes(searchLower) ||
+            t.description?.toLowerCase().includes(searchLower)
+        );
+    }
+
+    if (filters?.status === 'completed') {
+        tasks = tasks.filter(t => t.completed);
+    } else if (filters?.status === 'active') {
+        tasks = tasks.filter(t => !t.completed);
+    }
+
+    // Apply sorting
+    const sortBy = filters?.sortBy || 'createdAt';
+    const order = filters?.order || 'desc';
+    tasks.sort((a, b) => {
+        const aVal = a[sortBy];
+        const bVal = b[sortBy];
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+            return order === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+        return 0;
+    });
+
+    return tasks;
 };
 
 const saveGuestTasks = (tasks: Task[]) => {
@@ -51,8 +87,15 @@ export const deleteGuestTask = (id: number) => {
 };
 
 // API operations for authenticated users
-export const fetchTasks = async (token: string): Promise<Task[]> => {
-    const res = await fetch(`${API_URL}/tasks`, {
+export const fetchTasks = async (token: string, filters?: TaskFilters): Promise<Task[]> => {
+    const params = new URLSearchParams();
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+    if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters?.order) params.append('order', filters.order);
+
+    const url = `${API_URL}/tasks${params.toString() ? `?${params.toString()}` : ''}`;
+    const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Failed to fetch tasks');
