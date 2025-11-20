@@ -4,7 +4,8 @@ A modern, full-stack task management application featuring dual-mode operation (
 
 ## 📸 Screenshots
 
-> **Note**: Add your screenshots here after capturing them manually.
+> <img width="1607" height="994" alt="image" src="https://github.com/user-attachments/assets/7e0fcc70-c507-43d4-a111-7a31ca8e9a53" />
+
 
 ## 🎯 Project Overview
 
