@@ -1,4 +1,4 @@
-# Zodiac Task Manager
+# Zodiac TaskFlow
 
 A modern, full-stack task management application featuring dual-mode operation (guest/authenticated), real-time search and filtering, optimistic updates, and a beautiful UI. Built with cutting-edge technologies for maximum performance and developer experience.
 
@@ -98,37 +98,50 @@ Zodiac Task Manager is a production-ready task management application that demon
 take-home-zodiac/
 ├── backend/
 │   ├── src/
-│   │   ├── index.ts              # Main server (API routes, search/filter/sort)
-│   │   └── auth.ts               # Authentication logic (JWT + bcrypt)
+│   │   ├── controllers/         # HTTP request handlers
+│   │   │   ├── auth.controller.ts
+│   │   │   └── task.controller.ts
+│   │   ├── services/            # Business logic layer
+│   │   │   ├── auth.service.ts
+│   │   │   └── task.service.ts
+│   │   ├── repositories/        # Database access layer
+│   │   │   └── index.ts
+│   │   ├── schemas/             # Request validation schemas
+│   │   │   └── index.ts
+│   │   ├── utils/               # Utilities
+│   │   │   ├── env.ts           # Environment config
+│   │   │   ├── errors.ts        # Error classes
+│   │   │   └── response.ts      # Standard API response
+│   │   └── index.ts             # Main server entry point
 │   ├── prisma/
-│   │   ├── schema.prisma         # Database schema (User + Task models with indexes)
-│   │   └── migrations/           # Database migrations
+│   │   ├── schema.prisma        # Database schema (with indexes)
+│   │   └── migrations/          # Database migrations
 │   ├── test/
-│   │   └── app.test.ts           # Unit tests (7 tests, all passing)
-│   ├── .env.example              # Environment variables template
-│   └── package.json              # Backend dependencies
+│   │   └── app.test.ts          # Unit tests (7 tests, all passing)
+│   ├── .env.example             # Environment variables template
+│   └── package.json             # Backend dependencies
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── TaskCard.tsx      # Task display with inline edit
-│   │   │   └── TaskForm.tsx      # Task creation form
+│   │   │   ├── TaskCard.tsx     # Task display with inline edit
+│   │   │   └── TaskForm.tsx     # Task creation form
 │   │   ├── context/
-│   │   │   └── AuthContext.tsx   # Authentication state management
+│   │   │   └── AuthContext.tsx  # Authentication state management
 │   │   ├── pages/
-│   │   │   ├── Dashboard.tsx     # Main dashboard (React Query + filters)
-│   │   │   ├── LoginPage.tsx     # Login page
-│   │   │   └── RegisterPage.tsx  # Registration page
+│   │   │   ├── Dashboard.tsx    # Main dashboard (React Query + filters)
+│   │   │   ├── LoginPage.tsx    # Login page
+│   │   │   └── RegisterPage.tsx # Registration page
 │   │   ├── __tests__/
-│   │   │   ├── setup.ts          # Test configuration
-│   │   │   └── api.test.ts       # Guest mode tests
-│   │   ├── api.ts                # API client (dual-mode + filters)
-│   │   ├── App.tsx               # Main app (React Query provider)
-│   │   └── main.tsx              # Entry point
-│   ├── vite.config.ts            # Vite configuration
-│   └── package.json              # Frontend dependencies
+│   │   │   ├── setup.ts         # Test configuration
+│   │   │   └── api.test.ts      # Guest mode tests
+│   │   ├── api.ts               # API client (dual-mode + filters)
+│   │   ├── App.tsx              # Main app (React Query provider)
+│   │   └── main.tsx             # Entry point
+│   ├── vite.config.ts           # Vite configuration
+│   └── package.json             # Frontend dependencies
 │
-└── README.md                      # This file
+└── README.md                     # This file
 ```
 
 ## 🚀 Setup Instructions
@@ -152,17 +165,31 @@ cd ../frontend
 bun install
 ```
 
-### 2. Configure Database
+### 2. Configure Environment Variables
 
+**Backend:**
 ```bash
 cd backend
 cp .env.example .env
 ```
 
-Edit `.env`:
+Edit `backend/.env`:
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/taskmanager?schema=public"
 JWT_SECRET="your-secret-key-here"
+PORT=3000
+NODE_ENV=development
+```
+
+**Frontend:**
+```bash
+cd frontend
+cp .env.example .env
+```
+
+Edit `frontend/.env`:
+```env
+VITE_API_URL=http://localhost:3000
 ```
 
 ### 3. Run Migrations
@@ -171,122 +198,6 @@ JWT_SECRET="your-secret-key-here"
 cd backend
 bunx prisma migrate dev
 bunx prisma generate
-```
-
-### 4. Start Servers
-
-```bash
-# Terminal 1 - Backend
-cd backend
-bun run dev
-
-# Terminal 2 - Frontend
-cd frontend
-bun run dev
-```
-
-- **Backend**: http://localhost:3000
-- **Frontend**: http://localhost:5173
-
-## 📚 API Documentation
-
-### Authentication
-
-#### Register
-```http
-POST /auth/register
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-#### Login
-```http
-POST /auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**Response:**
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": { "id": 1, "email": "user@example.com" }
-}
-```
-
-### Tasks (Protected)
-
-All task endpoints require: `Authorization: Bearer <token>`
-
-#### Get Tasks (with filters)
-```http
-GET /tasks?search=meeting&status=active&sortBy=createdAt&order=desc
-```
-
-**Query Parameters:**
-- `search` (optional): Search in title and description
-- `status` (optional): `completed` | `active`
-- `sortBy` (optional): `createdAt` | `title` | `updatedAt` (default: `createdAt`)
-- `order` (optional): `asc` | `desc` (default: `desc`)
-
-#### Create Task
-```http
-POST /tasks
-Content-Type: application/json
-
-{
-  "title": "New task",
-  "description": "Optional description"
-}
-```
-
-#### Update Task
-```http
-PUT /tasks/:id
-Content-Type: application/json
-
-{
-  "title": "Updated title",
-  "completed": true
-}
-```
-
-#### Delete Task
-```http
-DELETE /tasks/:id
-```
-
-## ✨ Features
-
-### Core Features
-- ✅ **Dual-Mode Operation**
-  - Guest Mode: LocalStorage (no login)
-  - User Mode: PostgreSQL (with login)
-- ✅ **Full CRUD** operations
-- ✅ **Authentication** (JWT + bcrypt)
-- ✅ **Inline Task Editing**
-- ✅ **Modern UI** with Tailwind CSS v4
-
-### Advanced Features
-- 🔍 **Real-time Search** (title + description)
-- 📊 **Status Filtering** (All/Active/Completed)
-- 🔄 **Multiple Sort Options** (Date/Title/Updated)
-- ⚡ **Optimistic Updates** (React Query)
-- 🗂️ **Database Indexing** (userId, completed, createdAt, title)
-- 🧪 **Unit Tests** (Backend: 7/7 passing)
-
-## 🧪 Testing
-
-```bash
-# Backend tests
 cd backend
 bun test
 

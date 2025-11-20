@@ -1,19 +1,20 @@
 import { Elysia } from 'elysia';
 import { TaskService } from '../services/task.service';
 import { createTaskSchema, updateTaskSchema, taskQuerySchema } from '../schemas';
+import { successResponse, errorResponse } from '../utils/response';
 
 const taskService = new TaskService();
 
 export const taskController = new Elysia({ prefix: '/tasks' })
-    .derive(({ userId }) => ({ userId }))
-    .get('/', async ({ userId, query, set }) => {
+    .get('/', async (context: any) => {
+        const userId = context.userId;
         if (!userId) {
-            set.status = 401;
-            return { error: 'Unauthorized' };
+            context.set.status = 401;
+            return errorResponse('Unauthorized');
         }
 
         try {
-            const { search, status, sortBy, order, page, limit } = query as {
+            const { search, status, sortBy, order, page, limit } = context.query as {
                 search?: string;
                 status?: 'completed' | 'active';
                 sortBy?: 'createdAt' | 'title' | 'updatedAt';
@@ -30,67 +31,75 @@ export const taskController = new Elysia({ prefix: '/tasks' })
                 page: page ? parseInt(page) : undefined,
                 limit: limit ? parseInt(limit) : undefined,
             });
-            return result;
-        } catch (error: any) {
-            set.status = error.statusCode || 500;
-            return { error: error.message };
+            return successResponse(result, 'Tasks retrieved successfully');
+        } catch (error: unknown) {
+            const err = error as { statusCode?: number; message: string };
+            context.set.status = err.statusCode || 500;
+            return errorResponse(err.message);
         }
     }, {
         query: taskQuerySchema,
     })
-    .post('/', async ({ userId, body, set }) => {
+    .post('/', async (context: any) => {
+        const userId = context.userId;
         if (!userId) {
-            set.status = 401;
-            return { error: 'Unauthorized' };
+            context.set.status = 401;
+            return errorResponse('Unauthorized');
         }
 
         try {
             const result = await taskService.createTask({
-                ...body,
+                ...context.body,
                 userId,
             });
-            return result;
-        } catch (error: any) {
-            set.status = error.statusCode || 500;
-            return { error: error.message };
+            context.set.status = 201;
+            return successResponse(result, 'Task created successfully');
+        } catch (error: unknown) {
+            const err = error as { statusCode?: number; message: string };
+            context.set.status = err.statusCode || 500;
+            return errorResponse(err.message);
         }
     }, {
         body: createTaskSchema,
     })
-    .put('/:id', async ({ userId, params, body, set }) => {
+    .put('/:id', async (context: any) => {
+        const userId = context.userId;
         if (!userId) {
-            set.status = 401;
-            return { error: 'Unauthorized' };
+            context.set.status = 401;
+            return errorResponse('Unauthorized');
         }
 
         try {
             const result = await taskService.updateTask({
-                id: Number(params.id),
+                id: Number(context.params.id),
                 userId,
-                updates: body,
+                updates: context.body,
             });
-            return result;
-        } catch (error: any) {
-            set.status = error.statusCode || 500;
-            return { error: error.message };
+            return successResponse(result, 'Task updated successfully');
+        } catch (error: unknown) {
+            const err = error as { statusCode?: number; message: string };
+            context.set.status = err.statusCode || 500;
+            return errorResponse(err.message);
         }
     }, {
         body: updateTaskSchema,
     })
-    .delete('/:id', async ({ userId, params, set }) => {
+    .delete('/:id', async (context: any) => {
+        const userId = context.userId;
         if (!userId) {
-            set.status = 401;
-            return { error: 'Unauthorized' };
+            context.set.status = 401;
+            return errorResponse('Unauthorized');
         }
 
         try {
-            const result = await taskService.deleteTask({
-                id: Number(params.id),
+            await taskService.deleteTask({
+                id: Number(context.params.id),
                 userId,
             });
-            return result;
-        } catch (error: any) {
-            set.status = error.statusCode || 500;
-            return { error: error.message };
+            return successResponse(null, 'Task deleted successfully');
+        } catch (error: unknown) {
+            const err = error as { statusCode?: number; message: string };
+            context.set.status = err.statusCode || 500;
+            return errorResponse(err.message);
         }
     });

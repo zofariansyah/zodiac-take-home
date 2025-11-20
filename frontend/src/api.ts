@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:3000';
+import { API_CONFIG } from './config/api';
+
+const API_URL = API_CONFIG.BASE_URL;
 
 export interface Task {
     id: number;
@@ -123,7 +125,8 @@ export const fetchTasks = async (token: string, filters?: TaskFilters): Promise<
         headers: { 'Authorization': `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Failed to fetch tasks');
-    return res.json();
+    const response = await res.json();
+    return response.data; // Extract data from standard response
 };
 
 export const createTask = async (token: string, task: { title: string; description?: string }) => {
@@ -136,7 +139,8 @@ export const createTask = async (token: string, task: { title: string; descripti
         body: JSON.stringify(task),
     });
     if (!res.ok) throw new Error('Failed to create task');
-    return res.json();
+    const response = await res.json();
+    return response.data; // Extract data from standard response
 };
 
 export const updateTask = async (token: string, id: number, updates: Partial<Task>) => {
@@ -149,7 +153,8 @@ export const updateTask = async (token: string, id: number, updates: Partial<Tas
         body: JSON.stringify(updates),
     });
     if (!res.ok) throw new Error('Failed to update task');
-    return res.json();
+    const response = await res.json();
+    return response.data; // Extract data from standard response
 };
 
 export const deleteTask = async (token: string, id: number) => {
