@@ -18,6 +18,8 @@ const app = new Elysia()
         if (!authHeader) return { userId: null };
 
         const token = authHeader.split(' ')[1];
+        if (!token) return { userId: null };
+
         try {
             const userId = await authService.verifyToken(token);
             return { userId };

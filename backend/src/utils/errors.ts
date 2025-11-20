@@ -1,8 +1,8 @@
 // Custom error classes
 export class AppError extends Error {
     constructor(
-        public statusCode: number,
-        public message: string,
+        public override statusCode: number,
+        public override message: string,
         public isOperational = true
     ) {
         super(message);

@@ -13,7 +13,14 @@ export const taskController = new Elysia({ prefix: '/tasks' })
         }
 
         try {
-            const { search, status, sortBy, order, page, limit } = query as any;
+            const { search, status, sortBy, order, page, limit } = query as {
+                search?: string;
+                status?: 'completed' | 'active';
+                sortBy?: 'createdAt' | 'title' | 'updatedAt';
+                order?: 'asc' | 'desc';
+                page?: string;
+                limit?: string;
+            };
             const result = await taskService.getTasks({
                 userId,
                 search,
